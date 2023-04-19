@@ -1,15 +1,15 @@
 [*]
-[*] GTKWave Analyzer v3.3.100 (w)1999-2019 BSI
-[*] Mon Apr 17 05:26:37 2023
+[*] GTKWave Analyzer v3.3.77 (w)1999-2016 BSI
+[*] Wed Apr 19 00:13:25 2023
 [*]
-[dumpfile] "F:\github.com\wotupfoo\verilog-examples\.pio\build\simulation\differential_manchester_coding_tb.vcd"
-[dumpfile_mtime] "Mon Apr 17 05:24:10 2023"
-[dumpfile_size] 3047385
+[dumpfile] "F:\github.com\wotupfoo\verilog-examples\src\differential_manchester_coding_tb.vcd"
+[dumpfile_mtime] "Wed Apr 19 00:11:38 2023"
+[dumpfile_size] 3606952
 [savefile] "F:\github.com\wotupfoo\verilog-examples\src\differential_manchester_coding_tb.gtkw"
-[timestart] 8640
+[timestart] 23238000000
 [size] 1343 1164
-[pos] -220 -81
-*-13.000000 40500 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[pos] -1 -1
+*-29.000000 40500 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [treeopen] differential_manchester_decode_testbench.
 [sst_width] 211
 [signals_width] 239
@@ -18,16 +18,13 @@
 @28
 differential_manchester_decode_testbench.dmc.rst
 differential_manchester_decode_testbench.dmc.clk
-differential_manchester_decode_testbench.dmc.sample_clk
 differential_manchester_decode_testbench.dmc.signal
 differential_manchester_decode_testbench.dmc.sda
-@24
-differential_manchester_decode_testbench.dmc.sck_width[9:0]
-@28
 differential_manchester_decode_testbench.dmc.sck
 @24
-differential_manchester_decode_testbench.dmc.clk_cnt[4:0]
 differential_manchester_decode_testbench.dmc.sda_cnt[4:0]
 differential_manchester_decode_testbench.dmc.sck_cnt[4:0]
+@22
+differential_manchester_decode_testbench.dmc.sck_width[4:0]
 [pattern_trace] 1
 [pattern_trace] 0

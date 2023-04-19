@@ -41,7 +41,7 @@ module differential_manchester_decode_testbench();
         .nosignal(nosignal),        // No DM detected
         .sda(sda),                  // Recovered data
         .sck(sck),                  // Recovered clock
-        .sck_width(sck_width)       // Width of recovered clock (in 1uS) - assumes a 1MHz global clk for the width
+        .sck_width_us(sck_width)    // Width of recovered clock (in 1uS) - assumes a 1MHz global clk for the width
     );
 
     // ***********************************************************************************************
@@ -52,11 +52,14 @@ module differential_manchester_decode_testbench();
     initial 
         begin
             $display("Starting differential machester (DM) aka biphase mark coding (BMC) decode test");
-            $dumpfile(".pio/build/simulation/differential_manchester_coding_tb.vcd");
+            //$dumpfile(".pio/build/simulation/differential_manchester_coding_tb.vcd");
+            $dumpfile("differential_manchester_coding_tb.vcd");
             $dumpvars;
             //$monitor("step %d file %H offset %d sample %0H return=%d", step, file, offset, signal_value, r);
             // 10min of LTC @48kHz 8-bit mono starting at 1:00:00.00
-            file = $fopen("LTC_01000000_10mins_24fps_48000x8.wav","rb");
+
+            //file = $fopen("LTC_01000000_10mins_24fps_48000x8.wav","rb");
+            file = $fopen("../LTC_01000000_10mins_24fps_48000x8.wav","rb");
             offset = $ftell(file);
             r = $fseek(file, 44, `SEEK_SET); // Jump past the WAV header
         end

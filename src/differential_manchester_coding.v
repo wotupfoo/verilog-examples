@@ -15,7 +15,7 @@ module differential_manchester_decode
     output reg nosignal,            // No DM detected
     output reg sda,                 // Recovered data
     output reg sck,                 // Recovered clock
-    output reg [9:0] sck_width      // Width of recovered clock (in 1uS) - assumes a 1MHz global clk for the width
+    output reg [9:0] sck_width_us   // Width of recovered clock (in 1uS) - assumes a 1MHz global clk for the width
 );
 
 localparam OVERSAMPLING = $pow(2,OVERSAMPLING_BITS);    // Binary value of 2^OVERSAMPLING_BITS
@@ -24,13 +24,12 @@ localparam CLOCKDIVIDER = (CLOCK/(BPS*OVERSAMPLING));   // BPS * OVERSAMPLING = 
 localparam CLOCKDIVIDER_BITS = 7;  // Bits needed to express CLOCKDIVIDER
 
 reg [CLOCKDIVIDER_BITS:0] clk_cnt;  // Used to covert clk -> sample_clk
-reg sample_clk;                     // clk / OVERSAMPLING
+reg oversample_clk;                 // clk / CLOCKDIVIDER -> Over Sampling clk counter
 
 reg sck_done;                       // Signal to show that the SCK has already toggled inside a long (1) signal pulse
 reg [OVERSAMPLING_BITS:0] sda_cnt;  // Counter, in OVERSAMPLE units, of SDA
 reg [OVERSAMPLING_BITS:0] sck_cnt;  // Counter, in OVERSAMPLE units, of SCK
-
-reg [9:0] signal_width;             // Width between signal edges (0.1023 in 1uS)
+reg [OVERSAMPLING_BITS:0] sck_width;// Counter, in OVERSAMPLE units, of SCK
 
 // Async input signal -> clocked domain logic
 reg [2:0] signalreg;    // A 3 bit register to align the input signal to the FPGA clock logic
@@ -46,66 +45,68 @@ begin
     if(rst == 1'b1)
     begin
         clk_cnt <= 0;
-        sample_clk <= 0;
-        sda_cnt <= 0;
-        sck_cnt <= 0;
-        nosignal <= 1;
-        sck_width <= OVERSAMPLING/2;
-        signalreg <= 0;
+        oversample_clk <= 0;
+        signalreg <= 'b000;
+
         sda <= 0;
+        sda_cnt <= 0;
+        nosignal <= 1;
+
         sck <= 0;
+        sck_cnt <= 0;
         sck_done <= 0;
+        sck_width <= 16/*OVERSAMPLING/2*/;
+        sck_width_us <= 0;
     end else begin
         // Handle async signal conversion to clk domain
         signalreg <= {signalreg[1:0], signal};
-        // Increment clock counters
-        clk_cnt <= clk_cnt + 1;
-        if(clk_cnt == CLOCKDIVIDER) clk_cnt <= 0;
-        sample_clk <= (clk_cnt == 0);
+
+        if(signal_risingedge | signal_fallingedge)
+        begin
+            // Handle SDA
+            sda <= ~sda;
+            nosignal <= 0;
+
+            // Handle SCK
+            sck <= ~sck;
+            sck_done <= 0;            
+
+            if(sck_cnt < sck_width) sck_width <= sck_cnt;    // Signal arrived early
+
+            // Reset the clocks to synchronize to the newly detect edge
+            sda_cnt <= 0;
+            sck_cnt <= 0;
+            clk_cnt <= 0;
+            oversample_clk <= ~oversample_clk;
+        end else begin
+            // Inside the CLK tick
+            if(clk_cnt < 52/*CLOCKDIVIDER*/)
+            begin
+                clk_cnt <= clk_cnt + 1;
+            end else begin
+                // Inside the OVERCLOCKING tick
+                clk_cnt <= 0;
+                oversample_clk <= ~oversample_clk;
+
+                // Handle SDA
+                sda_cnt <= sda_cnt + 1;
+                if(sda_cnt == 15/*OVERSAMPLING-1*/)
+                begin
+                    nosignal <= 1;
+                end
+
+                // Handle SCK
+                sck_cnt <= sck_cnt + 1;
+                // Handle SCK mid-bit if the signal is late or a long "one" (vs short "zero")
+                if(sck_cnt == sck_width)
+                begin
+                    sck <= ~sck;
+                    sck_cnt <= 0;
+                end
+            end
+        end
     end
 end
-
-always @(posedge sample_clk)
-begin
-    sda_cnt <= sda_cnt + 1;
-    if(sda_cnt == OVERSAMPLING-1) nosignal <= 1;
-
-    // Handle SCK mid-bit if the signal is late or a long "one" (vs short "zero")
-    sck_cnt <= sck_cnt + 1;
-    if(sck_cnt == sck_width)
-    begin
-        if(sck_done == 0)
-            begin
-                sck <= ~sck;
-                sck_cnt <= 0;
-                sck_done <= 1;
-            end
-    end
-end
-
-always @(posedge signal_risingedge or posedge signal_fallingedge)
-    begin
-        // Handle SDA
-        nosignal <= 0;
-        signal_width <= sda_cnt;
-        sda_cnt <= 0;
-        //if(signal_risingedge == 1'b1) sda <= 1'b1;
-        //if(signal_fallingedge == 1'b1) sda <= 1'b0;
-        sda <= ~sda;
-
-        // Handle SCK
-        sck <= ~sck;
-        sck_done <= 0;
-        if(sck_cnt < sck_width)    // Signal arrived early
-            begin
-                sck_width <= sck_cnt;
-            end
-        sck_cnt <= 0;
-
-        // Reset the clocks to synchronize to the newly detect edge
-        clk_cnt <= 0;
-        sck_cnt <= 0;
-    end
 
 endmodule   // differential_manchester_decode
 
