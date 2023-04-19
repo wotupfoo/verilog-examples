@@ -90,9 +90,9 @@ module differential_manchester_decode_testbench();
             step <= step + 1;
             //$display("step = %d",step);
             // Finish simulation after running for 2.1 seconds
-            //if(step == 2100000) // 2.1M 1uS steps
+            if(step == 2100000) // 2.1M 1uS steps
             //if(step ==  250000) // 250ms 
-            if(step ==  50000) // 50ms 
+            //if(step ==  50000) // 50ms 
             //if(step ==  5000) // 5ms 
                 begin
                     $finish;

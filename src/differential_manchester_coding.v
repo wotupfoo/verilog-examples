@@ -26,9 +26,7 @@ localparam CLOCKDIVIDER_BITS = 7;  // Bits needed to express CLOCKDIVIDER
 reg [CLOCKDIVIDER_BITS:0] clk_cnt;  // Used to covert clk -> sample_clk
 reg oversample_clk;                 // clk / CLOCKDIVIDER -> Over Sampling clk counter
 
-reg sck_done;                       // Signal to show that the SCK has already toggled inside a long (1) signal pulse
-reg [OVERSAMPLING_BITS:0] sda_cnt;  // Counter, in OVERSAMPLE units, of SDA
-reg [OVERSAMPLING_BITS:0] sck_cnt;  // Counter, in OVERSAMPLE units, of SCK
+reg [OVERSAMPLING_BITS:0] oversample_cnt;  // Counter, in OVERSAMPLE units, of SDA
 reg [OVERSAMPLING_BITS:0] sck_width;// Counter, in OVERSAMPLE units, of SCK
 
 // Async input signal -> clocked domain logic
@@ -49,12 +47,9 @@ begin
         signalreg <= 'b000;
 
         sda <= 0;
-        sda_cnt <= 0;
         nosignal <= 1;
 
         sck <= 0;
-        sck_cnt <= 0;
-        sck_done <= 0;
         sck_width <= 16/*OVERSAMPLING/2*/;
         sck_width_us <= 0;
     end else begin
@@ -69,13 +64,11 @@ begin
 
             // Handle SCK
             sck <= ~sck;
-            sck_done <= 0;            
 
-            if(sck_cnt < sck_width) sck_width <= sck_cnt;    // Signal arrived early
+            if(oversample_cnt < sck_width) sck_width <= oversample_cnt;    // Signal arrived early
 
             // Reset the clocks to synchronize to the newly detect edge
-            sda_cnt <= 0;
-            sck_cnt <= 0;
+            oversample_cnt <= 0;
             clk_cnt <= 0;
             oversample_clk <= ~oversample_clk;
         end else begin
@@ -87,21 +80,18 @@ begin
                 // Inside the OVERCLOCKING tick
                 clk_cnt <= 0;
                 oversample_clk <= ~oversample_clk;
+                oversample_cnt <= oversample_cnt + 1;
 
                 // Handle SDA
-                sda_cnt <= sda_cnt + 1;
-                if(sda_cnt == 15/*OVERSAMPLING-1*/)
+                if(oversample_cnt == 15/*OVERSAMPLING-1*/)
                 begin
                     nosignal <= 1;
                 end
 
-                // Handle SCK
-                sck_cnt <= sck_cnt + 1;
                 // Handle SCK mid-bit if the signal is late or a long "one" (vs short "zero")
-                if(sck_cnt == sck_width)
+                if(oversample_cnt == sck_width)
                 begin
                     sck <= ~sck;
-                    sck_cnt <= 0;
                 end
             end
         end
